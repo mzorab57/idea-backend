@@ -53,4 +53,33 @@ class StorageController extends \Controller {
         $r2->delete($key);
         \Response::json(['deleted' => true]);
     }
+    public function url(): void {
+        $key = $this->request['query']['key'] ?? $this->request['body']['key'] ?? null;
+        if (!$key) {
+            \Response::json(['error' => 'Key required'], 400);
+            return;
+        }
+        $r2 = new \R2Service();
+        if (!$r2->objectExists($key)) {
+            \Response::json(['error' => 'Not found'], 404);
+            return;
+        }
+        $url = $r2->presignedUrl($key, 30);
+        \Response::json(['url' => $url]);
+    }
+    public function view(): void {
+        $key = $this->request['query']['key'] ?? null;
+        if (!$key) {
+            \Response::json(['error' => 'Key required'], 400);
+            return;
+        }
+        $r2 = new \R2Service();
+        if (!$r2->objectExists($key)) {
+            \Response::json(['error' => 'Not found'], 404);
+            return;
+        }
+        $url = $r2->presignedUrl($key, 5);
+        header('Location: ' . $url);
+        http_response_code(302);
+    }
 }

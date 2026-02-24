@@ -43,7 +43,7 @@ class BookManager extends \Controller {
                     }
                     $specs = $data['specifications'] ?? [];
                     foreach ($specs as $s) {
-                        $this->db->prepare("INSERT INTO book_specifications (book_id, spec_name, spec_value, group, is_visible) VALUES (?, ?, ?, ?, ?)")
+                        $this->db->prepare("INSERT INTO book_specifications (book_id, spec_name, spec_value, `group`, is_visible) VALUES (?, ?, ?, ?, ?)")
                             ->execute([$bookId, $s['name'] ?? '', $s['value'] ?? '', $s['group'] ?? null, isset($s['is_visible']) ? (int)$s['is_visible'] : 1]);
                     }
                     $this->db->commit();
@@ -80,7 +80,7 @@ class BookManager extends \Controller {
                     $this->db->prepare("DELETE FROM book_specifications WHERE book_id = ?")->execute([$id]);
                     $specs = $data['specifications'] ?? [];
                     foreach ($specs as $s) {
-                        $this->db->prepare("INSERT INTO book_specifications (book_id, spec_name, spec_value, `group, is_visible) VALUES (?, ?, ?, ?, ?)")
+                        $this->db->prepare("INSERT INTO book_specifications (book_id, spec_name, spec_value, `group`, is_visible) VALUES (?, ?, ?, ?, ?)")
                             ->execute([$id, $s['name'] ?? '', $s['value'] ?? '', $s['group'] ?? null, isset($s['is_visible']) ? (int)$s['is_visible'] : 1]);
                     }
                     $this->db->commit();
@@ -136,7 +136,8 @@ class BookManager extends \Controller {
                 }
                 $this->db->prepare("DELETE FROM book_specifications WHERE book_id = ?")->execute([$id]);
                 foreach ($data['specifications'] ?? [] as $s) {
-                    $this->db->prepare("INSERT INTO book_specifications (book_id, spec_name, spec_value) VALUES (?, ?, ?)")->execute([$id, $s['name'] ?? '', $s['value'] ?? '']);
+                    $this->db->prepare("INSERT INTO book_specifications (book_id, spec_name, spec_value, `group`, is_visible) VALUES (?, ?, ?, ?, ?)")
+                        ->execute([$id, $s['name'] ?? '', $s['value'] ?? '', $s['group'] ?? null, isset($s['is_visible']) ? (int)$s['is_visible'] : 1]);
                 }
                 $this->db->commit();
             }
@@ -193,7 +194,7 @@ class BookManager extends \Controller {
                 return $stmt->fetchAll();
             }
             public function getSpecs(int $id): array {
-                $stmt = $this->db->prepare("SELECT spec_name, spec_value, `group, is_visible FROM book_specifications WHERE book_id = ?");
+                $stmt = $this->db->prepare("SELECT spec_name, spec_value, `group`, is_visible FROM book_specifications WHERE book_id = ?");
                 $stmt->execute([$id]);
                 return $stmt->fetchAll();
             }

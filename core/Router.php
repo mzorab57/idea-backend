@@ -1,7 +1,7 @@
 <?php
 class Router {
     private array $routes = [];
-    public function add(string $method, string $path, callable $handler, array $middlewares = []): void {
+    public function add(string $method, string $path, $handler, array $middlewares = []): void {
         $this->routes[strtoupper($method)][$path] = ['handler' => $handler, 'middlewares' => $middlewares];
     }
     public function dispatch(): void {

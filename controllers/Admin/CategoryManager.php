@@ -15,6 +15,60 @@ class CategoryManager extends \Controller {
         };
         \Response::json($m->all());
     }
+    public function listSubcategories(): void {
+        $page = max(1, (int)($_GET['page'] ?? 1));
+        $limit = max(1, min(100, (int)($_GET['limit'] ?? 20)));
+        $offset = ($page - 1) * $limit;
+        $q = $_GET['q'] ?? null;
+        $active = isset($_GET['active']) ? (int)$_GET['active'] : null;
+        $categoryId = isset($_GET['category_id']) ? (int)$_GET['category_id'] : null;
+        $m = new class extends \Model {
+            public function list(array $filters, int $limit, int $offset): array {
+                $sql = "SELECT s.id, s.category_id, s.name, s.slug, s.is_active, c.name AS category_name
+                        FROM subcategories s
+                        LEFT JOIN categories c ON s.category_id = c.id
+                        WHERE 1=1";
+                $params = [];
+                if (isset($filters['q']) && $filters['q'] !== null && $filters['q'] !== '') {
+                    $sql .= " AND (s.name LIKE ? OR s.slug LIKE ? OR c.name LIKE ?)";
+                    $like = '%' . $filters['q'] . '%';
+                    $params[] = $like; $params[] = $like; $params[] = $like;
+                }
+                if (isset($filters['active'])) { $sql .= " AND s.is_active = ?"; $params[] = (int)$filters['active']; }
+                if (isset($filters['category_id'])) { $sql .= " AND s.category_id = ?"; $params[] = (int)$filters['category_id']; }
+                $sql .= " ORDER BY s.id DESC LIMIT ? OFFSET ?";
+                $params[] = $limit; $params[] = $offset;
+                $stmt = $this->db->prepare($sql);
+                $stmt->execute($params);
+                return $stmt->fetchAll();
+            }
+            public function count(array $filters): int {
+                $sql = "SELECT COUNT(*) AS c
+                        FROM subcategories s
+                        LEFT JOIN categories c ON s.category_id = c.id
+                        WHERE 1=1";
+                $params = [];
+                if (isset($filters['q']) && $filters['q'] !== null && $filters['q'] !== '') {
+                    $sql .= " AND (s.name LIKE ? OR s.slug LIKE ? OR c.name LIKE ?)";
+                    $like = '%' . $filters['q'] . '%';
+                    $params[] = $like; $params[] = $like; $params[] = $like;
+                }
+                if (isset($filters['active'])) { $sql .= " AND s.is_active = ?"; $params[] = (int)$filters['active']; }
+                if (isset($filters['category_id'])) { $sql .= " AND s.category_id = ?"; $params[] = (int)$filters['category_id']; }
+                $stmt = $this->db->prepare($sql);
+                $stmt->execute($params);
+                $row = $stmt->fetch();
+                return (int)($row['c'] ?? 0);
+            }
+        };
+        $filters = [];
+        if ($q !== null && $q !== '') $filters['q'] = $q;
+        if ($active !== null) $filters['active'] = $active;
+        if ($categoryId !== null) $filters['category_id'] = $categoryId;
+        $items = $m->list($filters, $limit, $offset);
+        $total = $m->count($filters);
+        \Response::json(['items' => $items, 'page' => $page, 'limit' => $limit, 'total' => $total]);
+    }
     public function createCategory(): void {
         $u = $GLOBALS['auth_user'] ?? null;
         $d = $this->request['body'];
