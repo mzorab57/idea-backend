@@ -115,7 +115,8 @@ CREATE TABLE logs (
     user_agent TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (book_id) REFERENCES books(id) ON DELETE CASCADE,
-    INDEX idx_logs_ip_time (ip_address, created_at)
+    INDEX idx_logs_ip_time (ip_address, created_at),
+    INDEX idx_logs_ip_action_time (ip_address, action_type, created_at)
 ) ENGINE=InnoDB;
 
 -- 9. لۆگی چالاکی ئەدمین و فەرمانبەران (Admin/Employee Action Logs)

@@ -8,7 +8,7 @@ class DownloadController extends \Controller {
     public function download(string $id): void {
         $model = new class extends \Model {
             public function findBook(int $id): ?array {
-                $stmt = $this->db->prepare("SELECT id, file_key FROM books WHERE id = ? AND is_active = 1 LIMIT 1");
+                $stmt = $this->db->prepare("SELECT id, title, file_key FROM books WHERE id = ? AND is_active = 1 LIMIT 1");
                 $stmt->execute([$id]);
                 $row = $stmt->fetch();
                 return $row ?: null;
@@ -36,7 +36,13 @@ class DownloadController extends \Controller {
         $ip = $_SERVER['REMOTE_ADDR'] ?? '';
         $ua = $_SERVER['HTTP_USER_AGENT'] ?? '';
         $model->logDownload($bookId, $ip, $ua);
-        $url = $r2->presignedUrl($book['file_key'], 5);
+        $ext = pathinfo($book['file_key'], PATHINFO_EXTENSION) ?: 'pdf';
+        $base = $book['title'] ?? ('book-' . $bookId);
+        $base = preg_replace('/[^A-Za-z0-9\\-\\_\\s]+/', '', $base);
+        $base = trim(preg_replace('/\\s+/', '-', $base), '-');
+        if ($base === '') $base = 'book-' . $bookId;
+        $filename = $base . '.' . $ext;
+        $url = $r2->presignedUrl($book['file_key'], 5, $filename);
         \Response::json(['url' => $url, 'expires' => 300]);
     }
 }

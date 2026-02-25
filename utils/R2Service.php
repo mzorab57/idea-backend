@@ -19,8 +19,12 @@ class R2Service {
             ]
         ]);
     }
-    public function presignedUrl(string $key, int $expiresMinutes = 5): string {
-        $cmd = $this->client->getCommand('GetObject', ['Bucket' => $this->bucket, 'Key' => $key]);
+    public function presignedUrl(string $key, int $expiresMinutes = 5, ?string $downloadName = null): string {
+        $params = ['Bucket' => $this->bucket, 'Key' => $key];
+        if ($downloadName) {
+            $params['ResponseContentDisposition'] = 'attachment; filename="' . $downloadName . '"';
+        }
+        $cmd = $this->client->getCommand('GetObject', $params);
         $req = $this->client->createPresignedRequest($cmd, "+{$expiresMinutes} minutes");
         return (string)$req->getUri();
     }

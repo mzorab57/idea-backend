@@ -5,7 +5,7 @@ require_once __DIR__ . '/../../core/Model.php';
 require_once __DIR__ . '/../../utils/Response.php';
 class DevController extends \Controller {
     public function resetAdmin(): void {
-        $env = $_ENV['APP_ENV'] ?? 'production';
+        $env = $_ENV['APP_ENV'] ?? 'local';
         if ($env !== 'local') {
             \Response::json(['error' => 'Forbidden'], 403);
             return;

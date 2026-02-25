@@ -4,6 +4,12 @@ class SecurityHeadersMiddleware {
         header('X-Content-Type-Options: nosniff');
         header('X-Frame-Options: DENY');
         header('Referrer-Policy: no-referrer');
-        header("Content-Security-Policy: default-src 'none'; frame-ancestors 'none'");
+        $r2 = $_ENV['R2_ENDPOINT'] ?? '';
+        $imgSrc = "'self' data:";
+        if ($r2) {
+            $imgSrc .= ' ' . $r2;
+        }
+        $csp = "default-src 'self'; img-src {$imgSrc}; frame-ancestors 'none'";
+        header("Content-Security-Policy: {$csp}");
     }
 }

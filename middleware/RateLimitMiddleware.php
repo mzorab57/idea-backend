@@ -52,4 +52,37 @@ class RateLimitMiddleware {
             }
         };
     }
+    public static function perBookDownloads(int $limit = 5, int $windowSeconds = 60, string $action = 'download'): callable {
+        return function () use ($limit, $windowSeconds, $action) {
+            $ip = $_SERVER['REMOTE_ADDR'] ?? '';
+            try {
+                $db = Database::connection();
+                $window = (int)$windowSeconds;
+                $uri = strtok($_SERVER['REQUEST_URI'] ?? '/', '?');
+                $bookId = null;
+                if (preg_match('@/api/books/(\\d+)/download@', $uri, $m)) {
+                    $bookId = (int)$m[1];
+                }
+                if (!$bookId) {
+                    $env = $_ENV['APP_ENV'] ?? 'production';
+                    if ($env === 'local') return true;
+                    return true;
+                }
+                $sql = "SELECT COUNT(*) AS cnt FROM logs WHERE ip_address = ? AND action_type = ? AND book_id = ? AND created_at >= (NOW() - INTERVAL {$window} SECOND)";
+                $stmt = $db->prepare($sql);
+                $stmt->execute([$ip, $action, $bookId]);
+                $row = $stmt->fetch();
+                if ((int)$row['cnt'] >= $limit) {
+                    Response::json(['error' => 'Rate limit exceeded for this book'], 429);
+                    return false;
+                }
+                return true;
+            } catch (\Throwable $e) {
+                $env = $_ENV['APP_ENV'] ?? 'production';
+                if ($env === 'local') return true;
+                Response::json(['error' => 'Server error'], 500);
+                return false;
+            }
+        };
+    }
 }

@@ -24,7 +24,7 @@ $router->add('POST', '/api/admin/login', [new Admin\AuthController(), 'login'], 
     RateLimitMiddleware::perIpActionLimit('login_attempt', 10, 300)
 ]);
 $router->add('GET', '/api/books/{id}/download', [new PublicC\DownloadController(), 'download'], [
-    RateLimitMiddleware::downloadsPerMinute(5, 60)
+    RateLimitMiddleware::perBookDownloads(5, 60)
 ]);
 $router->add('GET', '/api/books', [new PublicC\BookController(), 'list']);
 $router->add('GET', '/api/books/{id}', [new PublicC\BookController(), 'show']);
@@ -117,7 +117,7 @@ $router->add('GET', '/api/admin/stats/metrics', [new Admin\StatsController(), 'm
 $router->add('GET', '/api/admin/stats/overview', [new Admin\StatsController(), 'overview'], [
     AuthMiddleware::requireRole(['admin', 'employee'])
 ]);
-$router->add('GET', '/api/dev/reset-admin', [new Admin\DevController(), 'resetAdmin']);
+// $router->add('GET', '/api/dev/reset-admin', [new Admin\DevController(), 'resetAdmin']);
 $router->add('POST', '/api/admin/storage/upload', [new Admin\StorageController(), 'upload'], [
     AuthMiddleware::requireRole(['admin', 'employee'])
 ]);
