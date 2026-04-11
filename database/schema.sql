@@ -69,6 +69,7 @@ CREATE TABLE books (
     file_key VARCHAR(500), -- Key for Cloudflare R2
     view_count INT DEFAULT 0,
     thumbnail VARCHAR(255),
+    youtube_url VARCHAR(255) NULL,
     download_count INT DEFAULT 0,
     is_featured TINYINT(1) DEFAULT 0,
     is_active TINYINT(1) DEFAULT 1,
@@ -138,6 +139,17 @@ CREATE TABLE settings (
     setting_key VARCHAR(100) UNIQUE NOT NULL,
     setting_value TEXT,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB;
+
+-- 11. ڕێگەپێدان بۆ فەرمانبەران (Employee Permissions)
+CREATE TABLE IF NOT EXISTS employee_permissions (
+    user_id INT NOT NULL,
+    resource ENUM('categories','subcategories','authors','books') NOT NULL,
+    can_create TINYINT(1) DEFAULT 0,
+    can_update TINYINT(1) DEFAULT 0,
+    can_delete TINYINT(1) DEFAULT 0,
+    PRIMARY KEY (user_id, resource),
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 ) ENGINE=InnoDB;
 
 -- =====================================================

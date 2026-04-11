@@ -4,6 +4,7 @@ require_once __DIR__ . '/../../core/Controller.php';
 require_once __DIR__ . '/../../core/Model.php';
 require_once __DIR__ . '/../../utils/Response.php';
 require_once __DIR__ . '/../../utils/Logger.php';
+require_once __DIR__ . '/../../utils/Permission.php';
 class AuthorManager extends \Controller {
     public function list(): void {
         $m = new class extends \Model {
@@ -16,6 +17,7 @@ class AuthorManager extends \Controller {
     }
     public function create(): void {
         $u = $GLOBALS['auth_user'] ?? null;
+        if (($u['role'] ?? '') === 'employee' && !\Permission::can((int)$u['sub'], 'authors', 'create')) { \Response::json(['error' => 'Forbidden'], 403); return; }
         $d = $this->request['body'];
         $m = new class extends \Model {
             public function create(array $d): int {
@@ -30,6 +32,7 @@ class AuthorManager extends \Controller {
     }
     public function update(string $id): void {
         $u = $GLOBALS['auth_user'] ?? null;
+        if (($u['role'] ?? '') === 'employee' && !\Permission::can((int)$u['sub'], 'authors', 'update')) { \Response::json(['error' => 'Forbidden'], 403); return; }
         $d = $this->request['body'];
         $m = new class extends \Model {
             public function update(int $id, array $d): void {
@@ -44,6 +47,7 @@ class AuthorManager extends \Controller {
     }
     public function delete(string $id): void {
         $u = $GLOBALS['auth_user'] ?? null;
+        if (($u['role'] ?? '') === 'employee') { \Response::json(['error' => 'Forbidden'], 403); return; }
         $m = new class extends \Model {
             public function delete(int $id): void {
                 $this->db->prepare("DELETE FROM authors WHERE id = ?")->execute([$id]);

@@ -9,6 +9,9 @@ require_once __DIR__ . '/../controllers/Admin/CategoryManager.php';
 require_once __DIR__ . '/../controllers/Admin/UserManager.php';
 require_once __DIR__ . '/../controllers/Admin/SettingsManager.php';
 require_once __DIR__ . '/../controllers/Admin/StatsController.php';
+require_once __DIR__ . '/../controllers/Admin/PermissionManager.php';
+require_once __DIR__ . '/../controllers/Admin/AuditController.php';
+require_once __DIR__ . '/../controllers/Admin/UserManager.php';
 require_once __DIR__ . '/../controllers/Admin/DevController.php';
 require_once __DIR__ . '/../controllers/Admin/StorageController.php';
 require_once __DIR__ . '/../controllers/Public/DownloadController.php';
@@ -116,6 +119,18 @@ $router->add('GET', '/api/admin/stats/metrics', [new Admin\StatsController(), 'm
 ]);
 $router->add('GET', '/api/admin/stats/overview', [new Admin\StatsController(), 'overview'], [
     AuthMiddleware::requireRole(['admin', 'employee'])
+]);
+$router->add('GET', '/api/admin/me', [new Admin\UserManager(), 'me'], [
+    AuthMiddleware::requireRole(['admin', 'employee'])
+]);
+$router->add('GET', '/api/admin/permissions/{userId}', [new Admin\PermissionManager(), 'getByUser'], [
+    AuthMiddleware::requireRole(['admin'])
+]);
+$router->add('PUT', '/api/admin/permissions/{userId}', [new Admin\PermissionManager(), 'updateForUser'], [
+    AuthMiddleware::requireRole(['admin'])
+]);
+$router->add('GET', '/api/admin/audit/logs', [new Admin\AuditController(), 'list'], [
+    AuthMiddleware::requireRole(['admin'])
 ]);
 // $router->add('GET', '/api/dev/reset-admin', [new Admin\DevController(), 'resetAdmin']);
 $router->add('POST', '/api/admin/storage/upload', [new Admin\StorageController(), 'upload'], [

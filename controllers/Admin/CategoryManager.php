@@ -4,6 +4,7 @@ require_once __DIR__ . '/../../core/Controller.php';
 require_once __DIR__ . '/../../core/Model.php';
 require_once __DIR__ . '/../../utils/Response.php';
 require_once __DIR__ . '/../../utils/Logger.php';
+require_once __DIR__ . '/../../utils/Permission.php';
 class CategoryManager extends \Controller {
     public function list(): void {
         $m = new class extends \Model {
@@ -71,6 +72,7 @@ class CategoryManager extends \Controller {
     }
     public function createCategory(): void {
         $u = $GLOBALS['auth_user'] ?? null;
+        if (($u['role'] ?? '') === 'employee' && !\Permission::can((int)$u['sub'], 'categories', 'create')) { \Response::json(['error' => 'Forbidden'], 403); return; }
         $d = $this->request['body'];
         $m = new class extends \Model {
             public function create(array $d): int {
@@ -85,6 +87,7 @@ class CategoryManager extends \Controller {
     }
     public function updateCategory(string $id): void {
         $u = $GLOBALS['auth_user'] ?? null;
+        if (($u['role'] ?? '') === 'employee' && !\Permission::can((int)$u['sub'], 'categories', 'update')) { \Response::json(['error' => 'Forbidden'], 403); return; }
         $d = $this->request['body'];
         $m = new class extends \Model {
             public function update(int $id, array $d): void {
@@ -99,6 +102,7 @@ class CategoryManager extends \Controller {
     }
     public function deleteCategory(string $id): void {
         $u = $GLOBALS['auth_user'] ?? null;
+        if (($u['role'] ?? '') === 'employee') { \Response::json(['error' => 'Forbidden'], 403); return; }
         $m = new class extends \Model {
             public function delete(int $id): void {
                 $this->db->prepare("DELETE FROM categories WHERE id = ?")->execute([$id]);
@@ -110,6 +114,7 @@ class CategoryManager extends \Controller {
     }
     public function createSubcategory(): void {
         $u = $GLOBALS['auth_user'] ?? null;
+        if (($u['role'] ?? '') === 'employee' && !\Permission::can((int)$u['sub'], 'subcategories', 'create')) { \Response::json(['error' => 'Forbidden'], 403); return; }
         $d = $this->request['body'];
         $m = new class extends \Model {
             public function create(array $d): int {
@@ -124,6 +129,7 @@ class CategoryManager extends \Controller {
     }
     public function updateSubcategory(string $id): void {
         $u = $GLOBALS['auth_user'] ?? null;
+        if (($u['role'] ?? '') === 'employee' && !\Permission::can((int)$u['sub'], 'subcategories', 'update')) { \Response::json(['error' => 'Forbidden'], 403); return; }
         $d = $this->request['body'];
         $m = new class extends \Model {
             public function update(int $id, array $d): void {
@@ -138,6 +144,7 @@ class CategoryManager extends \Controller {
     }
     public function deleteSubcategory(string $id): void {
         $u = $GLOBALS['auth_user'] ?? null;
+        if (($u['role'] ?? '') === 'employee') { \Response::json(['error' => 'Forbidden'], 403); return; }
         $m = new class extends \Model {
             public function delete(int $id): void {
                 $this->db->prepare("DELETE FROM subcategories WHERE id = ?")->execute([$id]);

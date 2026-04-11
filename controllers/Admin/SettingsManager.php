@@ -16,7 +16,26 @@ class SettingsManager extends \Controller {
     }
     public function update(): void {
         $u = $GLOBALS['auth_user'] ?? null;
-        $items = $this->request['body'] ?? [];
+        $body = $this->request['body'] ?? [];
+        $items = [];
+        if (is_array($body)) {
+            if (isset($body['key']) && array_key_exists('value', $body)) {
+                $k = trim((string)$body['key']);
+                if ($k !== '') {
+                    $items[$k] = $body['value'];
+                }
+            } elseif (array_is_list($body)) {
+                foreach ($body as $entry) {
+                    if (is_array($entry) && isset($entry['key']) && array_key_exists('value', $entry)) {
+                        $k = trim((string)$entry['key']);
+                        if ($k !== '') $items[$k] = $entry['value'];
+                    }
+                }
+            } else {
+                $items = $body;
+            }
+        }
+        if (!$items) { \Response::json(['error' => 'Nothing to update'], 400); return; }
         $m = new class extends \Model {
             public function upsert(array $items): void {
                 $stmt = $this->db->prepare("INSERT INTO settings (setting_key, setting_value) VALUES (?, ?) ON DUPLICATE KEY UPDATE setting_value = VALUES(setting_value)");

@@ -5,9 +5,11 @@ require_once __DIR__ . '/../../core/Model.php';
 require_once __DIR__ . '/../../utils/Response.php';
 require_once __DIR__ . '/../../utils/Logger.php';
 require_once __DIR__ . '/../../utils/Validator.php';
+require_once __DIR__ . '/../../utils/Permission.php';
 class BookManager extends \Controller {
     public function create(): void {
         $u = $GLOBALS['auth_user'] ?? null;
+        if (($u['role'] ?? '') === 'employee' && !\Permission::can((int)$u['sub'], 'books', 'create')) { \Response::json(['error' => 'Forbidden'], 403); return; }
         $data = $this->request['body'];
         $reqErrors = \Validator::require(['title' => $data['title'] ?? '', 'slug' => $data['slug'] ?? ''], ['title', 'slug']);
         if ($reqErrors) { \Response::json(['error' => 'Invalid input', 'details' => $reqErrors], 400); return; }
@@ -20,7 +22,7 @@ class BookManager extends \Controller {
             public function create(array $data, int $userId): int {
                 try {
                     $this->db->beginTransaction();
-                    $stmt = $this->db->prepare("INSERT INTO books (title, slug, short_description, long_description, category_id, subcategory_id, file_key, thumbnail, is_featured, is_active, meta_title, meta_description, created_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+                    $stmt = $this->db->prepare("INSERT INTO books (title, slug, short_description, long_description, category_id, subcategory_id, file_key, thumbnail, youtube_url, is_featured, is_active, meta_title, meta_description, created_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
                     $stmt->execute([
                         $data['title'] ?? null,
                         $data['slug'] ?? null,
@@ -30,6 +32,7 @@ class BookManager extends \Controller {
                         $data['subcategory_id'] ?? null,
                         $data['file_key'] ?? null,
                         $data['thumbnail'] ?? null,
+                        $data['youtube_url'] ?? null,
                         isset($data['is_featured']) ? (int)$data['is_featured'] : 0,
                         isset($data['is_active']) ? (int)$data['is_active'] : 1,
                         $data['meta_title'] ?? null,
@@ -56,7 +59,7 @@ class BookManager extends \Controller {
             public function update(int $id, array $data): void {
                 try {
                     $this->db->beginTransaction();
-                    $this->db->prepare("UPDATE books SET title = ?, slug = ?, short_description = ?, long_description = ?, category_id = ?, subcategory_id = ?, file_key = ?, thumbnail = ?, is_featured = ?, is_active = ?, meta_title = ?, meta_description = ? WHERE id = ?")
+                    $this->db->prepare("UPDATE books SET title = ?, slug = ?, short_description = ?, long_description = ?, category_id = ?, subcategory_id = ?, file_key = ?, thumbnail = ?, youtube_url = ?, is_featured = ?, is_active = ?, meta_title = ?, meta_description = ? WHERE id = ?")
                         ->execute([
                             $data['title'] ?? null,
                             $data['slug'] ?? null,
@@ -66,6 +69,7 @@ class BookManager extends \Controller {
                             $data['subcategory_id'] ?? null,
                             $data['file_key'] ?? null,
                             $data['thumbnail'] ?? null,
+                            $data['youtube_url'] ?? null,
                             isset($data['is_featured']) ? (int)$data['is_featured'] : 0,
                             isset($data['is_active']) ? (int)$data['is_active'] : 1,
                             $data['meta_title'] ?? null,
@@ -110,11 +114,12 @@ class BookManager extends \Controller {
     }
     public function update(string $id): void {
         $u = $GLOBALS['auth_user'] ?? null;
+        if (($u['role'] ?? '') === 'employee' && !\Permission::can((int)$u['sub'], 'books', 'update')) { \Response::json(['error' => 'Forbidden'], 403); return; }
         $data = $this->request['body'];
         $mid = new class extends \Model {
             public function updateBook(int $id, array $data): void {
                 $this->db->beginTransaction();
-                $this->db->prepare("UPDATE books SET title = ?, slug = ?, short_description = ?, long_description = ?, category_id = ?, subcategory_id = ?, file_key = ?, thumbnail = ?, is_featured = ?, is_active = ?, meta_title = ?, meta_description = ? WHERE id = ?")
+                $this->db->prepare("UPDATE books SET title = ?, slug = ?, short_description = ?, long_description = ?, category_id = ?, subcategory_id = ?, file_key = ?, thumbnail = ?, youtube_url = ?, is_featured = ?, is_active = ?, meta_title = ?, meta_description = ? WHERE id = ?")
                     ->execute([
                         $data['title'] ?? null,
                         $data['slug'] ?? null,
@@ -124,6 +129,7 @@ class BookManager extends \Controller {
                         $data['subcategory_id'] ?? null,
                         $data['file_key'] ?? null,
                         $data['thumbnail'] ?? null,
+                        $data['youtube_url'] ?? null,
                         isset($data['is_featured']) ? (int)$data['is_featured'] : 0,
                         isset($data['is_active']) ? (int)$data['is_active'] : 1,
                         $data['meta_title'] ?? null,
@@ -153,6 +159,7 @@ class BookManager extends \Controller {
     }
     public function delete(string $id): void {
         $u = $GLOBALS['auth_user'] ?? null;
+        if (($u['role'] ?? '') === 'employee') { \Response::json(['error' => 'Forbidden'], 403); return; }
         $deleteFile = isset($_GET['delete_file']) ? (int)$_GET['delete_file'] === 1 : false;
         $mid = new class extends \Model {
             public function getFileKey(int $id): ?string {

@@ -69,6 +69,19 @@ class BookController extends \Controller {
                 $row = $stmt->fetch();
                 if (!$row) return null;
 
+                $directStmt = $this->db->prepare(
+                    "SELECT youtube_url, file_key, thumbnail, short_description, long_description, meta_title, meta_description
+                     FROM books
+                     WHERE id = ? LIMIT 1"
+                );
+                $directStmt->execute([$id]);
+                $direct = $directStmt->fetch() ?: [];
+                foreach (['youtube_url', 'file_key', 'thumbnail', 'short_description', 'long_description', 'meta_title', 'meta_description'] as $field) {
+                    if ((!isset($row[$field]) || $row[$field] === null || $row[$field] === '') && !empty($direct[$field])) {
+                        $row[$field] = $direct[$field];
+                    }
+                }
+
                 $authors = [];
                 $raw = $row['authors'] ?? null;
                 if ($raw) {

@@ -6,6 +6,8 @@ require_once __DIR__ . '/../../utils/Response.php';
 require_once __DIR__ . '/../../utils/Logger.php';
 class UserManager extends \Controller {
     public function list(): void {
+        $u = $GLOBALS['auth_user'] ?? null;
+        if (($u['role'] ?? '') !== 'admin') { \Response::json(['error' => 'Forbidden'], 403); return; }
         $m = new class extends \Model {
             public function allUsers(): array {
                 $stmt = $this->db->query("SELECT id, full_name, email, role, is_active, last_login, created_at FROM users ORDER BY id DESC");
@@ -14,8 +16,24 @@ class UserManager extends \Controller {
         };
         \Response::json($m->allUsers());
     }
+    public function me(): void {
+        $u = $GLOBALS['auth_user'] ?? null;
+        if (!$u) { \Response::json(['error' => 'Unauthorized'], 401); return; }
+        $m = new class extends \Model {
+            public function byId(int $id): ?array {
+                $st = $this->db->prepare("SELECT id, full_name, email, role, is_active FROM users WHERE id = ? LIMIT 1");
+                $st->execute([$id]);
+                $r = $st->fetch();
+                return $r ?: null;
+            }
+        };
+        $me = $m->byId((int)($u['sub'] ?? 0));
+        if (!$me) { \Response::json(['error' => 'Not found'], 404); return; }
+        \Response::json($me);
+    }
     public function create(): void {
         $u = $GLOBALS['auth_user'] ?? null;
+        if (($u['role'] ?? '') !== 'admin') { \Response::json(['error' => 'Forbidden'], 403); return; }
         $d = $this->request['body'];
         $m = new class extends \Model {
             public function create(array $d): int {
@@ -32,6 +50,7 @@ class UserManager extends \Controller {
     }
     public function update(string $id): void {
         $u = $GLOBALS['auth_user'] ?? null;
+        if (($u['role'] ?? '') !== 'admin') { \Response::json(['error' => 'Forbidden'], 403); return; }
         $d = $this->request['body'];
         $m = new class extends \Model {
             public function update(int $id, array $d): void {
@@ -54,6 +73,7 @@ class UserManager extends \Controller {
     }
     public function delete(string $id): void {
         $u = $GLOBALS['auth_user'] ?? null;
+        if (($u['role'] ?? '') !== 'admin') { \Response::json(['error' => 'Forbidden'], 403); return; }
         $m = new class extends \Model {
             public function delete(int $id): void {
                 $this->db->prepare("DELETE FROM users WHERE id = ? AND role = 'employee'")->execute([$id]);
