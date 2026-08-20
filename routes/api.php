@@ -14,7 +14,9 @@ require_once __DIR__ . '/../controllers/Admin/AuditController.php';
 require_once __DIR__ . '/../controllers/Admin/UserManager.php';
 require_once __DIR__ . '/../controllers/Admin/DevController.php';
 require_once __DIR__ . '/../controllers/Admin/StorageController.php';
+require_once __DIR__ . '/../controllers/Admin/BannerManager.php';
 require_once __DIR__ . '/../controllers/Public/DownloadController.php';
+require_once __DIR__ . '/../controllers/Public/BannerController.php';
 require_once __DIR__ . '/../controllers/Public/BookController.php';
 require_once __DIR__ . '/../controllers/Public/CategoryController.php';
 require_once __DIR__ . '/../controllers/Public/AuthorController.php';
@@ -29,6 +31,7 @@ $router->add('POST', '/api/admin/login', [new Admin\AuthController(), 'login'], 
 $router->add('GET', '/api/books/{id}/download', [new PublicC\DownloadController(), 'download'], [
     RateLimitMiddleware::perBookDownloads(5, 60)
 ]);
+$router->add('GET', '/api/banners', [new PublicC\BannerController(), 'list']);
 $router->add('GET', '/api/books', [new PublicC\BookController(), 'list']);
 $router->add('GET', '/api/books/{id}', [new PublicC\BookController(), 'show']);
 $router->add('GET', '/api/categories', [new PublicC\CategoryController(), 'list']);
@@ -100,6 +103,18 @@ $router->add('DELETE', '/api/admin/users/{id}', [new Admin\UserManager(), 'delet
     AuthMiddleware::requireRole(['admin'])
 ]);
 $router->add('GET', '/api/admin/settings', [new Admin\SettingsManager(), 'list'], [
+    AuthMiddleware::requireRole(['admin'])
+]);
+$router->add('GET', '/api/admin/banners', [new Admin\BannerManager(), 'list'], [
+    AuthMiddleware::requireRole(['admin'])
+]);
+$router->add('POST', '/api/admin/banners', [new Admin\BannerManager(), 'create'], [
+    AuthMiddleware::requireRole(['admin'])
+]);
+$router->add('PUT', '/api/admin/banners/{id}', [new Admin\BannerManager(), 'update'], [
+    AuthMiddleware::requireRole(['admin'])
+]);
+$router->add('DELETE', '/api/admin/banners/{id}', [new Admin\BannerManager(), 'delete'], [
     AuthMiddleware::requireRole(['admin'])
 ]);
 $router->add('PUT', '/api/admin/settings', [new Admin\SettingsManager(), 'update'], [

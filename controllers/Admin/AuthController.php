@@ -8,7 +8,7 @@ require_once __DIR__ . '/../../utils/Logger.php';
 require_once __DIR__ . '/../../utils/Validator.php';
 class AuthController extends \Controller {
     public function login(): void {
-        $email = $this->request['body']['email'] ?? '';
+        $email = strtolower(trim((string)($this->request['body']['email'] ?? '')));
         $password = $this->request['body']['password'] ?? '';
         $reqErrors = \Validator::require(['email' => $email, 'password' => $password], ['email', 'password']);
         if ($reqErrors || !\Validator::email($email)) {
@@ -17,7 +17,12 @@ class AuthController extends \Controller {
         }
         $model = new class extends \Model {
             public function findUser(string $email): ?array {
-                $stmt = $this->db->prepare("SELECT id, full_name, email, password, role, is_active FROM users WHERE email = ? LIMIT 1");
+                $stmt = $this->db->prepare(
+                    "SELECT id, full_name, email, password, role, is_active
+                     FROM users
+                     WHERE LOWER(TRIM(email)) = ?
+                     LIMIT 1"
+                );
                 $stmt->execute([$email]);
                 $row = $stmt->fetch();
                 return $row ?: null;

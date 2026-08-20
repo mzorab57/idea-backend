@@ -141,7 +141,20 @@ CREATE TABLE settings (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB;
 
--- 11. ڕێگەپێدان بۆ فەرمانبەران (Employee Permissions)
+-- 11. باننەری سەرەکیی وێبسایت (Hero Banners)
+CREATE TABLE hero_banners (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    title VARCHAR(255) NULL,
+    subtitle TEXT NULL,
+    image VARCHAR(500) NOT NULL,
+    sort_order INT DEFAULT 0,
+    is_active TINYINT(1) DEFAULT 1,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX idx_hero_banner_active_order (is_active, sort_order)
+) ENGINE=InnoDB;
+
+-- 12. ڕێگەپێدان بۆ فەرمانبەران (Employee Permissions)
 CREATE TABLE IF NOT EXISTS employee_permissions (
     user_id INT NOT NULL,
     resource ENUM('categories','subcategories','authors','books') NOT NULL,

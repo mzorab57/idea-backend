@@ -26,6 +26,7 @@ class StorageController extends \Controller {
         $allowed = [
             'books' => ['pdf'],
             'thumbnails' => ['jpg', 'jpeg', 'png', 'webp'],
+            'banners' => ['jpg', 'jpeg', 'png', 'webp'],
             'uploads' => ['pdf', 'jpg', 'jpeg', 'png', 'webp']
         ];
         if (isset($allowed[$type]) && $extLower && !in_array($extLower, $allowed[$type], true)) {

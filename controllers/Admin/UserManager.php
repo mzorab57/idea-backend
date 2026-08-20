@@ -5,6 +5,33 @@ require_once __DIR__ . '/../../core/Model.php';
 require_once __DIR__ . '/../../utils/Response.php';
 require_once __DIR__ . '/../../utils/Logger.php';
 class UserManager extends \Controller {
+    private function normalizeEmail(string $email): string {
+        return strtolower(trim($email));
+    }
+
+    private function isStrongPassword(string $password): bool {
+        return (bool) preg_match('/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9])\S{6,}$/', $password);
+    }
+
+    private function validatePayload(array $d, bool $requirePassword = true): ?string {
+        $fullName = trim((string)($d['full_name'] ?? ''));
+        $email = $this->normalizeEmail((string)($d['email'] ?? ''));
+        $password = (string)($d['password'] ?? '');
+
+        if ($fullName === '') {
+            return 'Full name is required';
+        }
+        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            return 'Invalid email';
+        }
+        if ($requirePassword || $password !== '') {
+            if (!$this->isStrongPassword($password)) {
+                return 'Password must be at least 6 characters and include uppercase, lowercase, number, symbol, with no spaces.';
+            }
+        }
+        return null;
+    }
+
     public function list(): void {
         $u = $GLOBALS['auth_user'] ?? null;
         if (($u['role'] ?? '') !== 'admin') { \Response::json(['error' => 'Forbidden'], 403); return; }
@@ -35,6 +62,10 @@ class UserManager extends \Controller {
         $u = $GLOBALS['auth_user'] ?? null;
         if (($u['role'] ?? '') !== 'admin') { \Response::json(['error' => 'Forbidden'], 403); return; }
         $d = $this->request['body'];
+        $error = $this->validatePayload($d, true);
+        if ($error) { \Response::json(['error' => $error], 400); return; }
+        $d['full_name'] = trim((string)($d['full_name'] ?? ''));
+        $d['email'] = $this->normalizeEmail((string)($d['email'] ?? ''));
         $m = new class extends \Model {
             public function create(array $d): int {
                 $stmt = $this->db->prepare("INSERT INTO users (full_name, email, password, role, is_active) VALUES (?, ?, ?, ?, ?)");
@@ -52,6 +83,10 @@ class UserManager extends \Controller {
         $u = $GLOBALS['auth_user'] ?? null;
         if (($u['role'] ?? '') !== 'admin') { \Response::json(['error' => 'Forbidden'], 403); return; }
         $d = $this->request['body'];
+        $error = $this->validatePayload($d, false);
+        if ($error) { \Response::json(['error' => $error], 400); return; }
+        if (isset($d['full_name'])) { $d['full_name'] = trim((string)$d['full_name']); }
+        if (isset($d['email'])) { $d['email'] = $this->normalizeEmail((string)$d['email']); }
         $m = new class extends \Model {
             public function update(int $id, array $d): void {
                 $fields = [];
